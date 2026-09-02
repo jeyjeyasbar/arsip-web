@@ -1,0 +1,263 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>ARSIP! — Bukti, Kegiatan & Akun</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Bangers&family=Space+Grotesk:wght@400;500;600;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="{{ url_for('static', filename='css/app.css') }}">
+</head>
+<body>
+
+<div id="authScreen" class="auth-wrap">
+<div class="auth-card card">
+<div style="text-align:center;"><span class="burst">ARSIP!</span></div>
+<h2 class="auth-title" style="color:var(--purple-dark);">Selamat datang kembali</h2>
+<p class="hint" style="text-align:center;margin-bottom:18px;">Masuk untuk mengelola seluruh arsip mahasiswa.</p>
+<div id="loginView">
+<label for="emailLoginInput">Email</label><input type="email" id="emailLoginInput" placeholder="nama@email.com" autocomplete="email">
+<label for="pwLoginInput">Kata sandi</label><div class="password-field"><input type="password" id="pwLoginInput" placeholder="Masukkan kata sandi" autocomplete="current-password"><button type="button" class="password-toggle" onclick="togglePassword('pwLoginInput', this)">👁</button></div>
+<div style="text-align:right;margin:8px 0 14px;"><button class="link-btn" onclick="showForgotPassword()">Lupa kata sandi?</button></div>
+<button class="btn btn-primary btn-block" onclick="loginWithEmail()">Masuk</button><div class="auth-divider"><span>atau</span></div><button class="btn btn-outline btn-block" onclick="showRegister()">Buat akun baru</button>
+</div>
+<div id="registerView" style="display:none;"><h3 style="color:var(--purple-dark);margin:0 0 12px;">Buat akun</h3>
+<label>Nama</label><input type="text" id="registerNama" placeholder="Nama lengkap" autocomplete="name">
+<label>Email</label><input type="email" id="registerEmail" placeholder="nama@email.com" autocomplete="email">
+<label>Kata sandi</label><div class="password-field"><input type="password" id="registerPassword" placeholder="Minimal 6 karakter" autocomplete="new-password"><button type="button" class="password-toggle" onclick="togglePassword('registerPassword', this)">👁</button></div>
+<label>Ulangi kata sandi</label><input type="password" id="registerPasswordConfirm" placeholder="Ulangi kata sandi" autocomplete="new-password">
+<button class="btn btn-primary btn-block" onclick="registerAccount()">Daftar</button><div style="text-align:center;margin-top:10px;"><button class="link-btn" onclick="showLogin()">Sudah punya akun? Masuk</button></div></div>
+<div id="forgotView" style="display:none;"><h3 style="color:var(--purple-dark);margin:0 0 12px;">Lupa kata sandi</h3><p class="hint">Masukkan email akunmu. Tautan reset akan dikirim ke email.</p><label>Email</label><input type="email" id="forgotEmail" placeholder="nama@email.com" autocomplete="email"><button class="btn btn-primary btn-block" onclick="requestReset()">Kirim tautan reset</button><div style="text-align:center;margin-top:10px;"><button class="link-btn" onclick="showLogin()">Kembali ke login</button></div></div>
+<div id="resetView" style="display:none;"><h3 style="color:var(--purple-dark);margin:0 0 12px;">Buat kata sandi baru</h3><input type="hidden" id="resetToken"><label>Kata sandi baru</label><input type="password" id="resetPassword" placeholder="Minimal 8 karakter" autocomplete="new-password"><label>Ulangi kata sandi baru</label><input type="password" id="resetPasswordConfirm" placeholder="Ulangi kata sandi baru" autocomplete="new-password"><button class="btn btn-primary btn-block" onclick="resetPassword()">Simpan kata sandi baru</button><div style="text-align:center;margin-top:10px;"><button class="link-btn" onclick="showLogin()">Kembali ke login</button></div></div>
+<p class="hint" style="margin-top:16px;border-top:2px dashed var(--purple-soft);padding-top:10px;">Login hanya menggunakan email dan kata sandi. Lupa kata sandi diproses melalui email reset yang aman.</p>
+</div></div>
+
+<div id="mainApp" class="app" style="display:none;">
+  <div class="topbar">
+    <span class="brand">ARSIP!</span>
+    <div class="profile-chip" onclick="goTab('profil')">
+      <div class="avatar" id="topAvatar">?</div>
+      <span id="topName">Profil</span>
+    </div>
+  </div>
+
+  <div class="tabs">
+    <button class="tabbtn active" data-tab="dashboard" onclick="goTab('dashboard')">🏠 Dashboard</button>
+    <button class="tabbtn" data-tab="pembayaran" onclick="goTab('pembayaran')">💸 Pembayaran</button>
+    <button class="tabbtn" data-tab="dokumen" onclick="goTab('dokumen')">📁 Dokumen</button>
+    <button class="tabbtn" data-tab="kegiatan" onclick="goTab('kegiatan')">📸 Kegiatan</button>
+    <button class="tabbtn" data-tab="akun" onclick="goTab('akun')">🔐 Akun</button>
+    <button class="tabbtn" data-tab="profil" onclick="goTab('profil')">🙂 Profil</button>
+  </div>
+
+  <!-- DASHBOARD -->
+  <div class="view active" id="view-dashboard">
+    <div class="card" style="margin-bottom:16px;display:flex;justify-content:space-between;gap:16px;align-items:center;flex-wrap:wrap;">
+      <div><h1 style="font-family:Bangers;font-size:38px;margin:0;color:var(--purple-dark);">Halo, <span id="dashName">Mahasiswa</span> 👋</h1>
+      <p class="hint" style="margin:5px 0 0;">Kelola seluruh arsip mahasiswa dari satu tempat.</p></div>
+      <div style="background:var(--teal);border:3px solid var(--ink);box-shadow:var(--shadow-off-sm);border-radius:12px;padding:10px 16px;text-align:center;"><b id="dashTotal" style="font-size:28px;">0</b><br><small>Total Arsip</small></div>
+    </div>
+    <div class="stat-grid">
+      <div class="stat"><b>💸</b><strong id="statPay">0</strong><small>Pembayaran</small></div>
+      <div class="stat"><b>📸</b><strong id="statAct">0</strong><small>Kegiatan</small></div>
+      <div class="stat"><b>📁</b><strong id="statDoc">0</strong><small>Dokumen</small></div>
+      <div class="stat"><b>🔐</b><strong id="statAcc">0</strong><small>Akun</small></div>
+    </div>
+    <div class="dashboard-grid">
+      <div class="card"><div class="section-head"><h3>Akses Cepat</h3></div>
+        <div class="quick-grid">
+          <button class="quick" onclick="goTab('dashboard');openAddModal()">💸<b>Tambah Pembayaran</b><span class="hint">Simpan bukti UKT dan pembayaran.</span></button>
+          <button class="quick" onclick="goTab('kegiatan');openAddModal()">📸<b>Tambah Kegiatan</b><span class="hint">Arsipkan foto kegiatan.</span></button>
+          <button class="quick" onclick="goTab('dokumen');openAddModal()">📁<b>Tambah Dokumen</b><span class="hint">Surat, sertifikat, dan PDF.</span></button>
+          <button class="quick" onclick="goTab('akun');openAddModal()">🔐<b>Tambah Akun</b><span class="hint">Catat akun organisasi.</span></button>
+        </div>
+      </div>
+      <div class="card"><div class="section-head"><h3>Arsip Terbaru</h3></div><div class="recent-list" id="recentList"></div></div>
+    </div>
+  </div>
+
+  <!-- PEMBAYARAN -->
+  <div class="view active" id="view-pembayaran">
+    <h2 class="panel-title">Bukti Pembayaran</h2>
+    <div class="search-row">
+      <select id="payFilterKategori" onchange="renderPayments()"><option value="">Semua kategori</option></select>
+      <input type="date" id="payFilterTanggal" onchange="renderPayments()">
+      <button class="btn btn-outline btn-sm" onclick="clearPayFilter()">Reset</button>
+    </div>
+    <div class="entry-list" id="payList"></div>
+  </div>
+
+  <!-- KEGIATAN -->
+  <div class="view" id="view-kegiatan">
+    <h2 class="panel-title">Foto Kegiatan</h2>
+    <div class="search-row">
+      <input type="text" id="actFilterText" placeholder="Cari nama kegiatan / keterangan" oninput="renderActivities()">
+      <input type="date" id="actFilterTanggal" onchange="renderActivities()">
+      <button class="btn btn-outline btn-sm" onclick="clearActFilter()">Reset</button>
+    </div>
+    <div class="gallery-grid" id="actList"></div>
+  </div>
+
+  <!-- DOKUMEN -->
+  <div class="view" id="view-dokumen">
+    <h2 class="panel-title">Arsip Dokumen</h2>
+    <div class="search-row">
+      <input type="text" id="docSearch" placeholder="Cari nama dokumen / kategori" oninput="renderDocuments()">
+      <select id="docFilterKategori" onchange="renderDocuments()"><option value="">Semua kategori</option></select>
+      <button class="btn btn-outline btn-sm" onclick="clearDocFilter()">Reset</button>
+    </div>
+    <div class="doc-grid" id="docList"></div>
+  </div>
+
+  <!-- AKUN -->
+  <div class="view" id="view-akun">
+    <h2 class="panel-title">Daftar Akun</h2>
+    <div class="search-row">
+      <input type="text" id="accFilterText" placeholder="Cari layanan / username" oninput="renderAccounts()">
+      <button class="btn btn-outline btn-sm" onclick="clearAccFilter()">Reset</button>
+    </div>
+    <p class="hint" style="color:var(--cream);opacity:.9;">Data akun disimpan terenkripsi di server. Tetap hindari menyimpan kredensial yang sangat sensitif.</p>
+    <div class="entry-list" id="accList"></div>
+  </div>
+
+  <!-- PROFIL -->
+  <div class="view profile-view" id="view-profil">
+    <h2 class="panel-title">Profil</h2>
+    <div class="card">
+      <div class="profile-photo-wrap">
+        <img id="profPhotoImg" class="profile-photo" style="display:none;">
+        <div id="profPhotoPlaceholder" class="profile-photo-placeholder">Foto</div>
+      </div>
+      <div style="text-align:center;margin-bottom:8px;">
+        <input type="file" id="profPhotoInput" accept="image/*" style="display:none;" onchange="handleProfilePhoto(event)">
+        <button class="btn btn-sm btn-yellow" onclick="document.getElementById('profPhotoInput').click()">Ganti foto</button>
+      </div>
+      <label>Nama</label>
+      <input type="text" id="profNama">
+      <label>Kampus</label>
+      <input type="text" id="profKampus">
+      <label>Fakultas</label>
+      <input type="text" id="profFakultas">
+      <label>Program Studi</label>
+      <input type="text" id="profProdi">
+      <button class="btn btn-primary btn-block" onclick="saveProfile()">Simpan Profil</button>
+
+      <div style="border-top:2px dashed var(--purple-soft);margin-top:18px;padding-top:14px;">
+        <h3 style="color:var(--purple-dark);font-size:20px;margin:0 0 8px;">Keamanan Akun</h3>
+        <label>Email login</label>
+        <input type="email" id="secEmail">
+        <input type="email" id="secEmail">
+        <button class="btn btn-yellow btn-block" onclick="saveSecurity()">Simpan Email Login</button>
+        <p class="hint">Email ini dipakai sebagai kredensial utama untuk masuk.</p>
+        <div style="margin-top:14px;padding-top:14px;border-top:2px dashed var(--purple-soft);">
+          <label>Kata sandi saat ini</label><input type="password" id="secCurrentPassword" autocomplete="current-password">
+          <label>Kata sandi baru</label><input type="password" id="secNewPassword" autocomplete="new-password">
+          <button class="btn btn-outline btn-block" onclick="changePassword()">Ubah Kata Sandi</button>
+        </div>
+      </div>
+
+      <div class="logout-row">
+        <button class="btn btn-outline" onclick="logout()">Keluar</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+  <div class="bottom-nav">
+    <button data-tab="dashboard" onclick="goTab('dashboard')"><span class="nav-icon">🏠</span>Beranda</button>
+    <button data-tab="pembayaran" onclick="goTab('pembayaran')"><span class="nav-icon">💸</span>Bayar</button>
+    <button data-tab="kegiatan" onclick="goTab('kegiatan')"><span class="nav-icon">📸</span>Kegiatan</button>
+    <button data-tab="dokumen" onclick="goTab('dokumen')"><span class="nav-icon">📁</span>Dokumen</button>
+    <button data-tab="profil" onclick="goTab('profil')"><span class="nav-icon">👤</span>Profil</button>
+  </div>
+<button class="fab" id="fabBtn" onclick="openAddModal()">+</button>
+
+<!-- MODAL: Pembayaran -->
+<div class="modal-bg" id="modalPay">
+  <div class="modal">
+    <button class="close-x" onclick="closeModals()">✕</button>
+    <h3>Tambah Bukti Pembayaran</h3>
+    <label>Kategori</label>
+    <input type="text" id="mPayKategori" placeholder="mis. UKT, Kas Himpunan, Sewa Alat">
+    <label>Tanggal</label>
+    <input type="date" id="mPayTanggal">
+    <label>Semester</label>
+    <input type="text" id="mPaySemester" placeholder="mis. Ganjil 2025/2026">
+    <label>Keterangan</label>
+    <textarea id="mPayKeterangan" rows="2"></textarea>
+    <label>Jumlah (Rp)</label>
+    <input type="text" id="mPayJumlah" placeholder="mis. 2500000">
+    <label>Gambar bukti</label>
+    <input type="file" id="mPayGambar" accept="image/*">
+    <div class="modal-actions">
+      <button class="btn btn-outline" onclick="closeModals()">Batal</button>
+      <button class="btn btn-primary" onclick="savePayment()">Simpan</button>
+    </div>
+  </div>
+</div>
+
+<!-- MODAL: Kegiatan -->
+<div class="modal-bg" id="modalAct">
+  <div class="modal">
+    <button class="close-x" onclick="closeModals()">✕</button>
+    <h3>Tambah Foto Kegiatan</h3>
+    <label>Nama kegiatan</label>
+    <input type="text" id="mActNama" placeholder="mis. Rapat Kerja, Bakti Sosial">
+    <label>Tanggal</label>
+    <input type="date" id="mActTanggal">
+    <label>Keterangan</label>
+    <textarea id="mActKeterangan" rows="2"></textarea>
+    <label>Foto</label>
+    <input type="file" id="mActFoto" accept="image/*">
+    <div class="modal-actions">
+      <button class="btn btn-outline" onclick="closeModals()">Batal</button>
+      <button class="btn btn-primary" onclick="saveActivity()">Simpan</button>
+    </div>
+  </div>
+</div>
+
+<!-- MODAL: Akun -->
+<div class="modal-bg" id="modalAcc">
+  <div class="modal">
+    <button class="close-x" onclick="closeModals()">✕</button>
+    <h3>Tambah Akun</h3>
+    <label>Layanan / Platform</label>
+    <input type="text" id="mAccLayanan" placeholder="mis. Instagram Himpunan">
+    <label>Username / Email</label>
+    <input type="text" id="mAccUsername">
+    <label>Kata sandi</label>
+    <input type="text" id="mAccPassword">
+    <label>Keterangan</label>
+    <textarea id="mAccKeterangan" rows="2"></textarea>
+    <div class="modal-actions">
+      <button class="btn btn-outline" onclick="closeModals()">Batal</button>
+      <button class="btn btn-primary" onclick="saveAccount()">Simpan</button>
+    </div>
+  </div>
+</div>
+
+<!-- MODAL: Dokumen -->
+<div class="modal-bg" id="modalDoc">
+  <div class="modal">
+    <button class="close-x" onclick="closeModals()">✕</button>
+    <h3>Tambah Dokumen</h3>
+    <label>Nama dokumen</label><input type="text" id="mDocNama" placeholder="mis. Sertifikat, Surat, KHS">
+    <label>Kategori</label><input type="text" id="mDocKategori" placeholder="mis. Akademik, Organisasi">
+    <label>Tanggal</label><input type="date" id="mDocTanggal">
+    <label>Keterangan</label><textarea id="mDocKeterangan" rows="2"></textarea>
+    <label>File</label><input type="file" id="mDocFile" accept=".pdf,image/jpeg,image/png,image/webp">
+    <div class="modal-actions"><button class="btn btn-outline" onclick="closeModals()">Batal</button><button class="btn btn-primary" onclick="saveDocument()">Simpan</button></div>
+  </div>
+</div>
+
+<div class="lightbox-bg" id="lightboxBg" onclick="if(event.target===this) closeLightbox()">
+  <div class="lightbox-box">
+    <button class="lightbox-close" onclick="closeLightbox()">✕</button>
+    <img id="lightboxImg" src="" alt="Pratinjau">
+    <button class="btn btn-yellow lightbox-download" id="lightboxDownloadBtn">Unduh Gambar</button>
+  </div>
+</div>
+
+<script src="{{ url_for('static', filename='js/app.js') }}"></script>
+</body>
+</html>
